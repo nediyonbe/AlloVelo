@@ -12,8 +12,6 @@ all_files = glob.glob(path + "/*.csv")
 
 #%%
 listy = []
-
-#%%
 counter_f = 0
 for f in all_files:
     print(f)
@@ -35,7 +33,6 @@ df_weather.describe()
 #Check data types, datetime fields may not be
 #%%
 df_trips.dtypes
-#%%
 df_weather.dtypes
 df_weather.head()
 #Set related fields to datetime
@@ -57,8 +54,163 @@ df_weather['weather_day'] = pd.DatetimeIndex(df_weather['date_time_local']).day
 df_weather['weather_hour'] = pd.DatetimeIndex(df_weather['date_time_local']).hour
 df_weather['weather_day_of_week'] = pd.DatetimeIndex(df_weather['date_time_local']).dayofweek
 
+#Create the coordianates tuple for mapping
+#%%
+df_trips.describe()
+df_trips.dtypes
 
+#Import stations and their coordinates for mapping
+#%%
+path_stations ='C:/Users/Ali/Documents/Insight/Bixi/Stations' # use your path
+all_files_stations = glob.glob(path_stations + "/*.csv")
+#%%
+listy_stations = []
+counter_f_stations = 0
+for f in all_files_stations:
+    print(f)
+    col_names_stations = ['station_code', 'station_name', 'station_latitude', 'station_longitude', 'station_year']
+    df = pd.read_csv(f, skiprows = 1, names = col_names_stations)
+    listy_stations.append(df)
+#%%
+df_stations = pd.concat(listy_stations, axis = 0, ignore_index = True)
+df_stations.describe()
 
+#check import
+#%%
+df_stations.groupby('station_year').size()
+
+#%%
+#Map the locations of stations YoY. This will let you see the change of station allocation across neighborhoods
+import plotly.plotly as py
+import plotly.graph_objs as go
+import plotly
+#%%
+df_stations.head()
+# setting user, api key and access token
+#%%
+plotly.tools.set_credentials_file(username='nediyonbe', api_key='pBiKl18jmZiSZU8BzwDY')
+mapbox_access_token = 'pk.eyJ1IjoibmVkaXlvbmJlIiwiYSI6ImNqcjZreXEzZDE0Yzg0OHBuaTdrMTdmcWEifQ.DFTnN07buUlCze5IM-S_tg'
+#Create your data feeding the map
+#%%
+anno_types = [2014, 2015, 2016, 2017, 2018]
+data = []
+for anno in anno_types:
+    station_data = dict(
+            lat = df_stations.loc[df_stations['station_year'] == anno,'station_latitude'],
+            lon = df_stations.loc[df_stations['station_year'] == anno,'station_longitude'],
+            name = anno,
+            marker = dict(size = 8, opacity = 0.5),
+            type = 'scattermapbox'
+        )
+    data.append(station_data)
+#Create your map layout
+#%%
+layout = dict(
+    height = 800,
+    width = 800,
+    # top, bottom, left and right margins
+    margin = dict(t = 0, b = 0, l = 0, r = 0),
+    font = dict(color = '#FFFFFF', size = 11),
+    paper_bgcolor = '#000000',
+    mapbox = dict(
+        # here you need the token from Mapbox
+        accesstoken = 'pk.eyJ1IjoibmVkaXlvbmJlIiwiYSI6ImNqcjZreXEzZDE0Yzg0OHBuaTdrMTdmcWEifQ.DFTnN07buUlCze5IM-S_tg',
+        bearing = 0,
+        # where we want the map to be centered i.e. Place des Arts (MTL)
+        center = dict(
+            lat = 45.51,
+            lon = -73.57
+        ),
+        # we want the map to be "parallel" to our screen, with no angle
+        pitch = 0,
+        # default level of zoom
+        zoom = 10,
+        # default map style
+        style = 'dark'
+    )
+)
+#Create your drop downs for the map
+#%%
+updatemenus=list([
+    # drop-down 1: map styles menu
+    # buttons containes as many dictionaries as many alternative map styles I want to offer
+    dict(
+        buttons=list([
+            dict(
+                args=['mapbox.style', 'dark'],
+                label='Dark',
+                method='relayout'
+            ),                    
+            dict(
+                args=['mapbox.style', 'light'],
+                label='Light',
+                method='relayout'
+            ),
+            dict(
+                args=['mapbox.style', 'outdoors'],
+                label='Outdoors',
+                method='relayout'
+            ),
+            dict(
+                args=['mapbox.style', 'satellite-streets'],
+                label='Satellite with Streets',
+                method='relayout'
+            )                    
+        ]),
+        # direction where I want the menu to expand when I click on it
+        direction = 'up',
+        # here I specify where I want to place this drop-down on the map
+        x = 0.75,
+        xanchor = 'left',
+        y = 0.05,
+        yanchor = 'bottom',
+              # specify font size and colors
+        bgcolor = '#000000',
+        bordercolor = '#FFFFFF',
+        font = dict(size=11)
+    ),    
+    # drop-down 2: select type of storm event to visualize
+    dict(
+         # for each button I specify which dictionaries of my data list I want to visualize. Remember I have 7 different
+         # types of storms but I have 8 options: the first will show all of them, while from the second to the last option, only
+         # one type at the time will be shown on the map
+         buttons=list([
+            dict(label = '2014',
+                 method = 'update',
+                 args = [{'visible': [True, False, False, False, False]}]),
+            dict(label = '2015',
+                 method = 'update',
+                 args = [{'visible': [False, True, False, False, False]}]),
+             dict(label = '2016',
+                 method = 'update',
+                 args = [{'visible': [False, False, True, False, False]}]),
+             dict(label = '2017',
+                 method = 'update',
+                 args = [{'visible': [False, False, False, True, False]}]),
+             dict(label = '2018',
+                 method = 'update',
+                 args = [{'visible': [False, False, False, False, True]}])          
+        ]),
+        # direction where the drop-down expands when opened
+        direction = 'down',
+        # positional arguments
+        x = 0.01,
+        xanchor = 'left',
+        y = 0.99,
+        yanchor = 'bottom',
+        # fonts and border
+        bgcolor = '#000000',
+        bordercolor = '#FFFFFF',
+        font = dict(size=11)
+    )
+])
+# assign the list of dictionaries to the layout dictionary
+layout['updatemenus'] = updatemenus
+#%%
+layout['title'] = 'Bixi Stations over Years'
+#%%
+figure = dict(data = data, layout = layout)
+py.iplot(figure, filename = 'Bixi_Stations_over_Years_File')
 #%%
 for_plot = df_trips.groupby('start_month').size()
 for_plot
@@ -66,7 +218,3 @@ for_plot
 #%%
 import seaborn as sns
 ax = sns.barplot(data = for_plot)
-
-#%%
-label_x = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov"]
-ax = x.plot.bar(x='label_x', y = 'for_plot', rot = 0)
