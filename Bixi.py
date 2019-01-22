@@ -211,7 +211,7 @@ layout['title'] = 'Bixi Stations over Years'
 figure = dict(data = data, layout = layout)
 py.iplot(figure, filename = 'Bixi_Stations_over_Years_File')
 #%%
-py.send_static_file(figure, file = 'C:/Users/Ali/Documents/Insight/Bixi/Program/AlloVelo/Templates/charty.html')
+plotly.offline.plot(data, filename = 'C:/Users/Ali/Documents/Insight/Bixi/Program/AlloVelo/Templates/charty.html')
 # for basic analyses:
 # for_plot = df_trips.groupby('start_month').size()
 # for_plot
