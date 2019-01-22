@@ -123,7 +123,7 @@ layout = dict(
         # we want the map to be "parallel" to our screen, with no angle
         pitch = 0,
         # default level of zoom
-        zoom = 20,
+        zoom = 11,
         # default map style
         style = 'dark'
     )
@@ -211,7 +211,9 @@ layout['title'] = 'Bixi Stations over Years'
 figure = dict(data = data, layout = layout)
 py.iplot(figure, filename = 'Bixi_Stations_over_Years_File')
 #%%
-plotly.offline.plot(data, filename = 'C:/Users/Ali/Documents/Insight/Bixi/Program/AlloVelo/Templates/charty.html')
+#plotly.plotly.iplot(data, filename = 'C:/Users/Ali/Documents/Insight/Bixi/Program/AlloVelo/Templates/charty.html')
+
+
 # for basic analyses:
 # for_plot = df_trips.groupby('start_month').size()
 # for_plot
