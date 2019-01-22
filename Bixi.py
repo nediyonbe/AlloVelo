@@ -124,7 +124,7 @@ layout = dict(
         # we want the map to be "parallel" to our screen, with no angle
         pitch = 0,
         # default level of zoom
-        zoom = 10,
+        zoom = 20,
         # default map style
         style = 'dark'
     )
