@@ -84,8 +84,7 @@ df_stations.groupby('station_year').size()
 import plotly.plotly as py
 import plotly.graph_objs as go
 import plotly
-#%%
-df_stations.head()
+
 # setting user, api key and access token
 #%%
 plotly.tools.set_credentials_file(username='nediyonbe', api_key='pBiKl18jmZiSZU8BzwDY')
@@ -212,9 +211,7 @@ layout['title'] = 'Bixi Stations over Years'
 figure = dict(data = data, layout = layout)
 py.iplot(figure, filename = 'Bixi_Stations_over_Years_File')
 #%%
-for_plot = df_trips.groupby('start_month').size()
-for_plot
-
-#%%
-import seaborn as sns
-ax = sns.barplot(data = for_plot)
+py.send_static_file(figure, file = 'C:/Users/Ali/Documents/Insight/Bixi/Program/AlloVelo/Templates/charty.html')
+# for basic analyses:
+# for_plot = df_trips.groupby('start_month').size()
+# for_plot
