@@ -85,6 +85,9 @@ import plotly.plotly as py
 import plotly.graph_objs as go
 import plotly
 
+#%%
+df_stations.head()
+df_stations.loc[df_stations['station_year'] == 2018, 'station_code'].apply(str).tolist()
 # setting user, api key and access token
 #%%
 plotly.tools.set_credentials_file(username='nediyonbe', api_key='pBiKl18jmZiSZU8BzwDY')
@@ -98,6 +101,8 @@ for anno in anno_types:
             lat = df_stations.loc[df_stations['station_year'] == anno,'station_latitude'],
             lon = df_stations.loc[df_stations['station_year'] == anno,'station_longitude'],
             name = anno,
+            text = df_stations.loc[df_stations['station_year'] == anno, 'station_code'].apply(str) + ' ' + df_stations.loc[df_stations['station_year'] == anno, 'station_name'].apply(str),
+            hoverinfo = 'text',
             marker = dict(size = 8, opacity = 0.5),
             type = 'scattermapbox'
         )
@@ -125,7 +130,7 @@ layout = dict(
         # default level of zoom
         zoom = 11,
         # default map style
-        style = 'dark'
+        style = 'outdoors'
     )
 )
 #Create your drop downs for the map
