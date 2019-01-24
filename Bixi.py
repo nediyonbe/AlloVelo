@@ -93,57 +93,107 @@ lon_min = df_stations['station_longitude'].min()
 lat_interval = (lat_max - lat_min) / 10
 lon_interval = (lon_max - lon_min) / 10
 #%%
-for clustorizer in range(1,11):
-    print(clustorizer)
-    df_stations.loc[(df_stations['station_latitude'] >= lat_min + lat_interval * (clustorizer - 1)) &
-                    (df_stations['station_latitude'] <= lat_min + lat_interval * clustorizer) &
-                    (df_stations['station_longitude'] >= lon_min + lon_interval * (clustorizer - 1)) &
-                    (df_stations['station_longitude'] <= lon_min + lon_interval * clustorizer),    
-    'cluster_code'] = clustorizer
+for clustorizer_lat in range(1,11):
+    print(clustorizer_lat)
+    for clustorizer_lon in range(1,11):
+            df_stations.loc[(df_stations['station_latitude'] >= lat_min + lat_interval * (clustorizer_lat - 1)) &
+                    (df_stations['station_latitude'] <= lat_min + lat_interval * clustorizer_lat) &
+                    (df_stations['station_longitude'] >= lon_min + lon_interval * (clustorizer_lon - 1)) &
+                    (df_stations['station_longitude'] <= lon_min + lon_interval * clustorizer_lon),    
+    'cluster_code'] = clustorizer_lat * 10 + clustorizer_lon
 #df_stations.describe()
+# print(lat_max)
+# print(lat_min)
+# print(lon_max)
+# print(lon_min)
+# print(lon_interval)
+#%%
+df_stations[df_stations['cluster_code'].isnull()].head()
+#%%
 df_stations.groupby('cluster_code').size()
 #%%
 df_trips.head()
 
 #%%
 # Prepare your df that will be input to the algorithm: To be done in a detailed fashion later
-# 1.Join df_trips and df_stations over station_code to get cluster_code
+# 1. Join df_trips and df_stations over station_code to get cluster_code
 # 2. Aggregate df_trips over start_just_date and cluster_code with pickup count
 # 3. Aggregate df_weather over daweather_just_date with max temp, max wind speed
 # 4. Join df_trips and df_weather over start_just_date = weather_just_date to get daily max temp and wind
-#Step1:
-df_trips['start_just_date'].apply(str)
+#Step1&2:
+#df_trips['start_just_date'].apply(str) #grouping by date filed crashed
 df_trips.head()
 df_trips_agg_date = df_trips[['start_station_code','start_just_date']].groupby(['start_station_code','start_just_date']).size()
+#%%
+df_trips_agg_date.rename(columns={0:'pickups'}, inplace=True)
+#%%
 df_trips_agg_date.head()
+#%%
 df_trips_agg_date = df_trips_agg_date.reset_index()
-#df_trips_agg_date.rename(columns = ['start_station_code', 'start_just_date', 'pickups'], inplace = True)
 df_trips_agg_date_cluster = pd.merge(df_trips_agg_date, df_stations[['station_code', 'cluster_code']], 
                             left_on=['start_station_code'], right_on=['station_code'], 
-                            how='left')
+                            how='left')                        
 df_trips_agg_date_cluster.head()                       
-#df_weather.groupby('weather_just_date').size()
-#df_trips.groupby('start_just_date').size()
+
+#Step3
 #%%
-df_trips_agg.head()
-#rename columns
+df_trips_agg_date.info()
 #%%
-# Step 2:
-df_weather_agg = df_weather_agg.groupby('weather_just_date').agg({'relative_humidity':[np.max, np.mean], 
-                                            'temperature':[np.max]})
-df_weather_agg.head()
-#Step 3:
+#df_weather['weather_just_date'].apply(str)
+#%%
+#df_weather.to_csv('C:/Users/Ali/Desktop/xyz.csv', index = False)
+df_weather_agg_date = df_weather[['weather_just_date','temperature']].groupby('weather_just_date').max()
+df_weather_agg_date = df_weather_agg_date.reset_index()
+#df_weather_agg_date.rename(columns={0:'temperature'}, inplace=True)
 
-
-
-
-
-
-
+# check solar radiation NULL values. The info command gives non-null for the field but there are nulls
+#%%
+df_weather_agg_date.head()
+#df_weather_agg_date.info()
 
 #%%
-#Create your df input to the ML procedure
-df_weather.head()
+# Step4:
+df_trips_agg_date_cluster_temp = pd.merge(df_trips_agg_date_cluster, df_weather_agg_date, 
+                            left_on=['start_just_date'], right_on=['weather_just_date'], 
+                            how='left')
+#%%                      
+df_trips_agg_date_cluster_temp.head()
+#%%
+target = df_trips_agg_date_cluster_temp['pickups']
+target.head()
+#%%
+data = df_trips_agg_date_cluster_temp[['cluster_code', 'temperature']]
+#%%
+data.head()
+
+#%%
+#Run your ML algortihm
+# Sperate train and test data
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+import sklearn.metrics as skl
+#%%
+X_train, X_test, y_train, y_test = train_test_split(data, 
+                                                    target, 
+                                                    test_size=0.2, random_state=0)
+# There are three steps to model something with sklearn
+# 1. Set up the model
+#%%
+model = LinearRegression()
+# 2. Use fit
+#%%
+model.fit(X_train, y_train)
+# 3. Check the score
+#%%
+model.score(X_test, y_test)
+#%%
+# Make predictions using the testing set
+y_pred = model.predict(X_test)
+#%%
+# The coefficients
+print('Coefficients: \n', model.coef_)
+# Explained variance score: 1 is perfect prediction
+print('Variance score: %.2f' % skl.r2_score(y_test, y_pred))
 
 #%%
 #Map the locations of stations YoY. This will let you see the change of station allocation across neighborhoods
