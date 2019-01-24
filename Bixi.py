@@ -4,6 +4,7 @@
 print('test')
 import pandas as pd
 import glob
+import numpy as np
 
 # Import bicyle use data
 #%%
@@ -47,17 +48,17 @@ df_trips['start_month'] = pd.DatetimeIndex(df_trips['start_date']).month
 df_trips['start_day'] = pd.DatetimeIndex(df_trips['start_date']).day
 df_trips['start_hour'] = pd.DatetimeIndex(df_trips['start_date']).hour
 df_trips['start_day_of_week'] = pd.DatetimeIndex(df_trips['start_date']).dayofweek
+df_trips['start_just_date'] = pd.DatetimeIndex(df_trips['start_date']).date
 #%%
 df_weather['weather_year'] = pd.DatetimeIndex(df_weather['date_time_local']).year
 df_weather['weather_month'] = pd.DatetimeIndex(df_weather['date_time_local']).month
 df_weather['weather_day'] = pd.DatetimeIndex(df_weather['date_time_local']).day
 df_weather['weather_hour'] = pd.DatetimeIndex(df_weather['date_time_local']).hour
 df_weather['weather_day_of_week'] = pd.DatetimeIndex(df_weather['date_time_local']).dayofweek
-
+df_weather['weather_just_date'] = pd.DatetimeIndex(df_weather['date_time_local']).date
 #Create the coordianates tuple for mapping
 #%%
-df_trips.describe()
-df_trips.dtypes
+df_trips.head()
 
 #Import stations and their coordinates for mapping
 #%%
@@ -73,11 +74,76 @@ for f in all_files_stations:
     listy_stations.append(df)
 #%%
 df_stations = pd.concat(listy_stations, axis = 0, ignore_index = True)
-df_stations.describe()
+#%%
+df_stations.head()
 
-#check import
+#check import   
 #%%
 df_stations.groupby('station_year').size()
+
+#%%
+# Define clusters: To be done in a detailed fashion later
+# Pickup and drops will be regrouped by clusters
+# For test purposes allocate stations on a 10x10 matrix limited by the following coordinates:
+# N: 45.56, S:45.42, W:-73.68, E:-73.49
+lat_max = df_stations['station_latitude'].max()
+lat_min = df_stations['station_latitude'].min()
+lon_max = df_stations['station_longitude'].max()
+lon_min = df_stations['station_longitude'].min()
+lat_interval = (lat_max - lat_min) / 10
+lon_interval = (lon_max - lon_min) / 10
+#%%
+for clustorizer in range(1,11):
+    print(clustorizer)
+    df_stations.loc[(df_stations['station_latitude'] >= lat_min + lat_interval * (clustorizer - 1)) &
+                    (df_stations['station_latitude'] <= lat_min + lat_interval * clustorizer) &
+                    (df_stations['station_longitude'] >= lon_min + lon_interval * (clustorizer - 1)) &
+                    (df_stations['station_longitude'] <= lon_min + lon_interval * clustorizer),    
+    'cluster_code'] = clustorizer
+#df_stations.describe()
+df_stations.groupby('cluster_code').size()
+#%%
+df_trips.head()
+
+#%%
+# Prepare your df that will be input to the algorithm: To be done in a detailed fashion later
+# 1.Join df_trips and df_stations over station_code to get cluster_code
+# 2. Aggregate df_trips over start_just_date and cluster_code with pickup count
+# 3. Aggregate df_weather over daweather_just_date with max temp, max wind speed
+# 4. Join df_trips and df_weather over start_just_date = weather_just_date to get daily max temp and wind
+#Step1:
+df_trips['start_just_date'].apply(str)
+df_trips.head()
+df_trips_agg_date = df_trips[['start_station_code','start_just_date']].groupby(['start_station_code','start_just_date']).size()
+df_trips_agg_date.head()
+df_trips_agg_date = df_trips_agg_date.reset_index()
+#df_trips_agg_date.rename(columns = ['start_station_code', 'start_just_date', 'pickups'], inplace = True)
+df_trips_agg_date_cluster = pd.merge(df_trips_agg_date, df_stations[['station_code', 'cluster_code']], 
+                            left_on=['start_station_code'], right_on=['station_code'], 
+                            how='left')
+df_trips_agg_date_cluster.head()                       
+#df_weather.groupby('weather_just_date').size()
+#df_trips.groupby('start_just_date').size()
+#%%
+df_trips_agg.head()
+#rename columns
+#%%
+# Step 2:
+df_weather_agg = df_weather_agg.groupby('weather_just_date').agg({'relative_humidity':[np.max, np.mean], 
+                                            'temperature':[np.max]})
+df_weather_agg.head()
+#Step 3:
+
+
+
+
+
+
+
+
+#%%
+#Create your df input to the ML procedure
+df_weather.head()
 
 #%%
 #Map the locations of stations YoY. This will let you see the change of station allocation across neighborhoods
@@ -87,7 +153,7 @@ import plotly
 
 #%%
 df_stations.head()
-df_stations.loc[df_stations['station_year'] == 2018, 'station_code'].apply(str).tolist()
+
 # setting user, api key and access token
 #%%
 plotly.tools.set_credentials_file(username='nediyonbe', api_key='pBiKl18jmZiSZU8BzwDY')
@@ -102,6 +168,7 @@ for anno in anno_types:
             lon = df_stations.loc[df_stations['station_year'] == anno,'station_longitude'],
             name = anno,
             text = df_stations.loc[df_stations['station_year'] == anno, 'station_code'].apply(str) + ' ' + df_stations.loc[df_stations['station_year'] == anno, 'station_name'].apply(str),
+            
             hoverinfo = 'text',
             marker = dict(size = 8, opacity = 0.5),
             type = 'scattermapbox'
