@@ -166,34 +166,13 @@ data = df_trips_agg_date_cluster_temp[['cluster_code', 'temperature']]
 #%%
 data.head()
 
+#Knn regression explains 28% variation, better than the regular regression w/ 8%
 #%%
-#Run your ML algortihm
-# Sperate train and test data
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-import sklearn.metrics as skl
+from sklearn.neighbors import KNeighborsRegressor
 #%%
-X_train, X_test, y_train, y_test = train_test_split(data, 
-                                                    target, 
-                                                    test_size=0.2, random_state=0)
-# There are three steps to model something with sklearn
-# 1. Set up the model
+knnreg = KNeighborsRegressor(n_neighbors = 5).fit(X_train, y_train)
 #%%
-model = LinearRegression()
-# 2. Use fit
-#%%
-model.fit(X_train, y_train)
-# 3. Check the score
-#%%
-model.score(X_test, y_test)
-#%%
-# Make predictions using the testing set
-y_pred = model.predict(X_test)
-# The coefficients
-print('Coefficients: \n', model.coef_)
-# Explained variance score: 1 is perfect prediction
-print('Variance score: %.2f' % skl.r2_score(y_test, y_pred))
-
+print(knnreg.score(X_test, y_test))
 
 #%%
 #Map the locations of stations YoY. This will let you see the change of station allocation across neighborhoods
