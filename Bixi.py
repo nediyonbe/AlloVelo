@@ -189,11 +189,11 @@ model.score(X_test, y_test)
 #%%
 # Make predictions using the testing set
 y_pred = model.predict(X_test)
-#%%
 # The coefficients
 print('Coefficients: \n', model.coef_)
 # Explained variance score: 1 is perfect prediction
 print('Variance score: %.2f' % skl.r2_score(y_test, y_pred))
+
 
 #%%
 #Map the locations of stations YoY. This will let you see the change of station allocation across neighborhoods
