@@ -131,18 +131,15 @@ df_trips.head()
 df_trips_agg_date = df_trips[['start_station_code','start_just_date']].groupby(['start_station_code','start_just_date']).size()
 #%%
 df_trips_agg_date.rename(columns={0:'pickups'}, inplace=True)
-#%%
-df_trips_agg_date.info()
+
 #%%
 df_trips_agg_date = df_trips_agg_date.reset_index()
 df_trips_agg_date_cluster = pd.merge(df_trips_agg_date, df_stations_clusters[['station_code', 'cluster_code']], 
                             left_on=['start_station_code'], right_on=['station_code'], 
-                            how='left') 
-#%%     
+                            how='left')    
 #df_trips_agg_date.to_csv('C:/Users/Ali/Desktop/xyztripsagg.csv', index = False)     
 #df_stations.to_csv('C:/Users/Ali/Desktop/xyzstation.csv', index = False)                                
-#df_trips_agg_date_cluster.info()
-#%%     
+#df_trips_agg_date_cluster.info()    
 #df_trips_agg_date_cluster.sort_values(by=['start_station_code'])                    
 
 #Step3
@@ -170,16 +167,19 @@ df_trips_agg_date_cluster_temp = pd.merge(df_trips_agg_date_cluster, df_weather_
 #%%                      
 df_trips_agg_date_cluster_temp.info()
 #%%
+from sklearn import preprocessing
 target = df_trips_agg_date_cluster_temp['pickups']
 target.head()
 #%%
-data = df_trips_agg_date_cluster_temp[['cluster_code', 'temperature']]
+data = preprocessing.normalize(df_trips_agg_date_cluster_temp[['cluster_code', 'temperature']])
 #%%
-data.head()
+#data.head()
 
 #Knn regression explains 28% variation, better than the regular regression w/ 8%
 #%%
+from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsRegressor
+#import KNeighborsRegressor
 #%%
 X_train, X_test, y_train, y_test = train_test_split(data, target, random_state = 0)
 #%%
@@ -195,10 +195,9 @@ X_test.info()
 y_predict_output.size
 #%%
 df_trips_agg_date_cluster_temp.info()
-#%%
-dfx = df_trips_agg_date_cluster_temp
-dfx['start_just_date'] = pd.to_datetime(df_trips_agg_date_cluster_temp['start_just_date'])
-dfx[dfx['start_just_date'] == '2017-05-01'].head(10)
+# dfx = df_trips_agg_date_cluster_temp
+# dfx['start_just_date'] = pd.to_datetime(df_trips_agg_date_cluster_temp['start_just_date'])
+# dfx[dfx['start_just_date'] == '2017-05-01'].head(10)
 #%%
 df_trips_agg_date_cluster.describe()
 #%%
