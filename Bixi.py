@@ -58,7 +58,7 @@ df_weather['weather_day_of_week'] = pd.DatetimeIndex(df_weather['date_time_local
 df_weather['weather_just_date'] = pd.DatetimeIndex(df_weather['date_time_local']).date
 #Create the coordianates tuple for mapping
 #%%
-df_trips.head()
+df_weather.info()
 
 #Import stations and their coordinates for mapping
 #%%
@@ -111,9 +111,14 @@ for clustorizer_lat in range(1,11):
 df_stations[df_stations['cluster_code'].isnull()].head()
 #%%
 df_stations.groupby('cluster_code').size()
-#%%
-df_trips.head()
 
+#%%
+#stations repeat YoY. Take 2018 as the base as some stations slightly change location causing cluster changes when at the border
+df_stations_clusters = df_stations[['station_code', 'cluster_code']][df_stations['station_year'] == 2018]
+#%%
+df_stations_clusters.head()
+#%%
+df_stations_clusters.describe()
 #%%
 # Prepare your df that will be input to the algorithm: To be done in a detailed fashion later
 # 1. Join df_trips and df_stations over station_code to get cluster_code
@@ -127,21 +132,27 @@ df_trips_agg_date = df_trips[['start_station_code','start_just_date']].groupby([
 #%%
 df_trips_agg_date.rename(columns={0:'pickups'}, inplace=True)
 #%%
-df_trips_agg_date.head()
+df_trips_agg_date.info()
 #%%
 df_trips_agg_date = df_trips_agg_date.reset_index()
-df_trips_agg_date_cluster = pd.merge(df_trips_agg_date, df_stations[['station_code', 'cluster_code']], 
+df_trips_agg_date_cluster = pd.merge(df_trips_agg_date, df_stations_clusters[['station_code', 'cluster_code']], 
                             left_on=['start_station_code'], right_on=['station_code'], 
-                            how='left')                        
-df_trips_agg_date_cluster.head()                       
+                            how='left') 
+#%%     
+#df_trips_agg_date.to_csv('C:/Users/Ali/Desktop/xyztripsagg.csv', index = False)     
+#df_stations.to_csv('C:/Users/Ali/Desktop/xyzstation.csv', index = False)                                
+#df_trips_agg_date_cluster.info()
+#%%     
+#df_trips_agg_date_cluster.sort_values(by=['start_station_code'])                    
 
 #Step3
 #%%
 df_trips_agg_date.info()
 #%%
-#df_weather['weather_just_date'].apply(str)
+df_trips_agg_date_cluster.info()
 #%%
-#df_weather.to_csv('C:/Users/Ali/Desktop/xyz.csv', index = False)
+df_trips_agg_date_cluster[df_trips_agg_date_cluster['cluster_code'].isnull()].head()
+#%%
 df_weather_agg_date = df_weather[['weather_just_date','temperature']].groupby('weather_just_date').max()
 df_weather_agg_date = df_weather_agg_date.reset_index()
 #df_weather_agg_date.rename(columns={0:'temperature'}, inplace=True)
@@ -157,7 +168,7 @@ df_trips_agg_date_cluster_temp = pd.merge(df_trips_agg_date_cluster, df_weather_
                             left_on=['start_just_date'], right_on=['weather_just_date'], 
                             how='left')
 #%%                      
-df_trips_agg_date_cluster_temp.head()
+df_trips_agg_date_cluster_temp.info()
 #%%
 target = df_trips_agg_date_cluster_temp['pickups']
 target.head()
@@ -170,10 +181,28 @@ data.head()
 #%%
 from sklearn.neighbors import KNeighborsRegressor
 #%%
+X_train, X_test, y_train, y_test = train_test_split(data, target, random_state = 0)
+#%%
 knnreg = KNeighborsRegressor(n_neighbors = 5).fit(X_train, y_train)
 #%%
+#Get the R-squared
 print(knnreg.score(X_test, y_test))
-
+#%%
+y_predict_output = knnreg.predict(X_test)
+#%%
+X_test.info()
+#%%
+y_predict_output.size
+#%%
+df_trips_agg_date_cluster_temp.info()
+#%%
+dfx = df_trips_agg_date_cluster_temp
+dfx['start_just_date'] = pd.to_datetime(df_trips_agg_date_cluster_temp['start_just_date'])
+dfx[dfx['start_just_date'] == '2017-05-01'].head(10)
+#%%
+df_trips_agg_date_cluster.describe()
+#%%
+df_weather_agg_date.describe()
 #%%
 #Map the locations of stations YoY. This will let you see the change of station allocation across neighborhoods
 import plotly.plotly as py
