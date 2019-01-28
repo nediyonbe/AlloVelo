@@ -5,6 +5,7 @@ print('test')
 import pandas as pd
 import glob
 import numpy as np
+import datetime
 
 # Import bicyle use data
 #%%
@@ -22,14 +23,12 @@ for f in all_files:
 
 #%%
 df_trips = pd.concat(listy, axis = 0, ignore_index = True)
-df_trips.describe()
 
 # Import weather data
 #%%
-f_weather ='C:/Users/Ali/Documents/Insight/Bixi/Weather Data/eng-hourly-01012014-18-01-2019.csv' # use your path
-col_names_weather = ['date_time_local', 'unixtime',	'pressure_station',	'pressure_sea',	'wind_dir',	'wind_dir_10s',	'wind_speed', 'wind_gust', 'relative_humidity', 'dew_point', 'temperature', 'windchill', 'humidex', 'visibility', 'health_index',	'cloud_cover_4', 'cloud_cover_8', 'cloud_cover_10', 'solar_radiation']
+f_weather ='C:/Users/Ali/Documents/Insight/Bixi/Weather Data/eng-hourly-01012014-18-01-2019_modified.csv' # use your path
+col_names_weather = ['date_time_local', 'unixtime',	'pressure_station',	'pressure_sea',	'wind_dir',	'wind_dir_10s',	'wind_speed', 'wind_gust', 'relative_humidity', 'dew_point', 'temperature', 'windchill', 'humidex', 'visibility', 'health_index',	'cloud_cover_4', 'cloud_cover_8', 'cloud_cover_10', 'solar_radiation', 'humidex_filled', 'cloud_cover_8_filled', 'wind_dir_filled']
 df_weather = pd.read_csv(f_weather, skiprows = 1, names = col_names_weather)
-df_weather.describe()
 
 #Check data types, datetime fields may not be
 #%%
@@ -47,15 +46,18 @@ df_trips['start_year'] = pd.DatetimeIndex(df_trips['start_date']).year
 df_trips['start_month'] = pd.DatetimeIndex(df_trips['start_date']).month
 df_trips['start_day'] = pd.DatetimeIndex(df_trips['start_date']).day
 df_trips['start_hour'] = pd.DatetimeIndex(df_trips['start_date']).hour
-df_trips['start_day_of_week'] = pd.DatetimeIndex(df_trips['start_date']).dayofweek
+df_trips['start_day_of_week'] = pd.DatetimeIndex(df_trips['start_date']).dayofweek + 1 #Monday is 0, Tue is 1
 df_trips['start_just_date'] = pd.DatetimeIndex(df_trips['start_date']).date
-#%%
+df_trips['start_just_date_hr'] = df_trips['start_year'].map(str) + df_trips['start_month'].apply(lambda x: '{0:0>2}'.format(x)).map(str) + df_trips['start_day'].apply(lambda x: '{0:0>2}'.format(x)).map(str) +df_trips['start_hour'].apply(lambda x: '{0:0>2}'.format(x)).map(str) 
+df_trips['start_just_date_hr'] = pd.to_numeric(df_trips['start_just_date_hr'])
 df_weather['weather_year'] = pd.DatetimeIndex(df_weather['date_time_local']).year
 df_weather['weather_month'] = pd.DatetimeIndex(df_weather['date_time_local']).month
 df_weather['weather_day'] = pd.DatetimeIndex(df_weather['date_time_local']).day
 df_weather['weather_hour'] = pd.DatetimeIndex(df_weather['date_time_local']).hour
-df_weather['weather_day_of_week'] = pd.DatetimeIndex(df_weather['date_time_local']).dayofweek
+df_weather['weather_day_of_week'] = pd.DatetimeIndex(df_weather['date_time_local']).dayofweek + 1 #Monday is 0, Tue is 1
 df_weather['weather_just_date'] = pd.DatetimeIndex(df_weather['date_time_local']).date
+df_weather['weather_just_date_hr'] = df_weather['weather_year'].map(str) + df_weather['weather_month'].apply(lambda x: '{0:0>2}'.format(x)).map(str) + df_weather['weather_day'].apply(lambda x: '{0:0>2}'.format(x)).map(str) +df_weather['weather_hour'].apply(lambda x: '{0:0>2}'.format(x)).map(str) 
+df_weather['weather_just_date_hr'] = pd.to_numeric(df_weather['weather_just_date_hr'])
 #Create the coordianates tuple for mapping
 #%%
 df_weather.info()
@@ -72,7 +74,6 @@ for f in all_files_stations:
     col_names_stations = ['station_code', 'station_name', 'station_latitude', 'station_longitude', 'station_year']
     df = pd.read_csv(f, skiprows = 1, names = col_names_stations)
     listy_stations.append(df)
-#%%
 df_stations = pd.concat(listy_stations, axis = 0, ignore_index = True)
 #%%
 df_stations.head()
@@ -90,17 +91,18 @@ lat_max = df_stations['station_latitude'].max()
 lat_min = df_stations['station_latitude'].min()
 lon_max = df_stations['station_longitude'].max()
 lon_min = df_stations['station_longitude'].min()
-lat_interval = (lat_max - lat_min) / 10
-lon_interval = (lon_max - lon_min) / 10
+num_clusters = 5
+lat_interval = (lat_max - lat_min) / num_clusters
+lon_interval = (lon_max - lon_min) / num_clusters
 #%%
-for clustorizer_lat in range(1,11):
+for clustorizer_lat in range(1,num_clusters+1):
     print(clustorizer_lat)
-    for clustorizer_lon in range(1,11):
+    for clustorizer_lon in range(1,num_clusters+1):
             df_stations.loc[(df_stations['station_latitude'] >= lat_min + lat_interval * (clustorizer_lat - 1)) &
                     (df_stations['station_latitude'] <= lat_min + lat_interval * clustorizer_lat) &
                     (df_stations['station_longitude'] >= lon_min + lon_interval * (clustorizer_lon - 1)) &
                     (df_stations['station_longitude'] <= lon_min + lon_interval * clustorizer_lon),    
-    'cluster_code'] = clustorizer_lat * 10 + clustorizer_lon
+    'cluster_code'] = clustorizer_lat * 10 + clustorizer_lon 
 #df_stations.describe()
 # print(lat_max)
 # print(lat_min)
@@ -118,7 +120,7 @@ df_stations_clusters = df_stations[['station_code', 'cluster_code']][df_stations
 #%%
 df_stations_clusters.head()
 #%%
-df_stations_clusters.describe()
+df_trips.head()
 #%%
 # Prepare your df that will be input to the algorithm: To be done in a detailed fashion later
 # 1. Join df_trips and df_stations over station_code to get cluster_code
@@ -127,13 +129,19 @@ df_stations_clusters.describe()
 # 4. Join df_trips and df_weather over start_just_date = weather_just_date to get daily max temp and wind
 #Step1&2:
 #df_trips['start_just_date'].apply(str) #grouping by date filed crashed
-df_trips.head()
-df_trips_agg_date = df_trips[['start_station_code','start_just_date']].groupby(['start_station_code','start_just_date']).size()
+df_trips_agg_date = df_trips[['start_station_code','start_just_date_hr']].groupby(['start_station_code','start_just_date_hr']).size()
 #%%
-df_trips_agg_date.rename(columns={0:'pickups'}, inplace=True)
+df_trips_agg_date.head()
 
 #%%
 df_trips_agg_date = df_trips_agg_date.reset_index()
+#%%
+df_trips_agg_date.rename(columns={0:'pickups'}, inplace=True)
+#%%
+df_trips_agg_date['pickups'].sum()
+#%%
+df_trips_agg_date.head() 
+#%%
 df_trips_agg_date_cluster = pd.merge(df_trips_agg_date, df_stations_clusters[['station_code', 'cluster_code']], 
                             left_on=['start_station_code'], right_on=['station_code'], 
                             how='left')    
@@ -144,34 +152,41 @@ df_trips_agg_date_cluster = pd.merge(df_trips_agg_date, df_stations_clusters[['s
 
 #Step3
 #%%
-df_trips_agg_date.info()
+df_trips_agg_date_cluster.info() #6348847 entries regrouped by hour
 #%%
-df_trips_agg_date_cluster.info()
+df_weather.info()
+#%%
+df_weather.head()
 #%%
 df_trips_agg_date_cluster[df_trips_agg_date_cluster['cluster_code'].isnull()].head()
 #%%
-df_weather_agg_date = df_weather[['weather_just_date','temperature']].groupby('weather_just_date').max()
+df_weather_agg_date = df_weather[['weather_just_date_hr', 'weather_day_of_week','weather_hour','weather_year','temperature','wind_speed','relative_humidity','wind_gust', 'cloud_cover_8_filled','humidex_filled','wind_dir_10s']].groupby('weather_just_date_hr').max()
 df_weather_agg_date = df_weather_agg_date.reset_index()
 #df_weather_agg_date.rename(columns={0:'temperature'}, inplace=True)
 
 # check solar radiation NULL values. The info command gives non-null for the field but there are nulls
 #%%
+df_weather_agg_date['wind_gust'] = df_weather_agg_date['wind_gust'].fillna(0)
 df_weather_agg_date.head()
-#df_weather_agg_date.info()
 
 #%%
 # Step4:
 df_trips_agg_date_cluster_temp = pd.merge(df_trips_agg_date_cluster, df_weather_agg_date, 
-                            left_on=['start_just_date'], right_on=['weather_just_date'], 
+                            left_on=['start_just_date_hr'], right_on=['weather_just_date_hr'], 
                             how='left')
 #%%                      
-df_trips_agg_date_cluster_temp.info()
+#df_trips_agg_date_cluster_temp.head()
+df_trips_agg_date_cluster_temp.groupby('weather_year').size()
+#%%  
+df_trips_agg_date_cluster_temp = df_trips_agg_date_cluster_temp[df_trips_agg_date_cluster_temp['weather_year'] == 2018]
+#%%  
+df_trips_agg_date_cluster_temp.head()
 #%%
 from sklearn import preprocessing
 target = df_trips_agg_date_cluster_temp['pickups']
 target.head()
 #%%
-data = preprocessing.normalize(df_trips_agg_date_cluster_temp[['cluster_code', 'temperature']])
+data = preprocessing.normalize(df_trips_agg_date_cluster_temp[['weather_hour', 'weather_day_of_week', 'cluster_code', 'temperature','wind_speed','relative_humidity','wind_gust', 'cloud_cover_8_filled','humidex_filled','wind_dir_10s']])
 #%%
 #data.head()
 
@@ -183,10 +198,10 @@ from sklearn.neighbors import KNeighborsRegressor
 #%%
 X_train, X_test, y_train, y_test = train_test_split(data, target, random_state = 0)
 #%%
-knnreg = KNeighborsRegressor(n_neighbors = 5).fit(X_train, y_train)
-#%%
-#Get the R-squared
-print(knnreg.score(X_test, y_test))
+print(datetime.datetime.now().time())
+knnreg = KNeighborsRegressor(n_neighbors = 41).fit(X_train, y_train)
+print(datetime.datetime.now().time())
+print(knnreg.score(X_test, y_test)) #Get the R-squared
 #%%
 y_predict_output = knnreg.predict(X_test)
 #%%
