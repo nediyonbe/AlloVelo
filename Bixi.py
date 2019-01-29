@@ -103,12 +103,7 @@ for clustorizer_lat in range(1,num_clusters+1):
                     (df_stations['station_longitude'] >= lon_min + lon_interval * (clustorizer_lon - 1)) &
                     (df_stations['station_longitude'] <= lon_min + lon_interval * clustorizer_lon),    
     'cluster_code'] = clustorizer_lat * 10 + clustorizer_lon 
-#df_stations.describe()
-# print(lat_max)
-# print(lat_min)
-# print(lon_max)
-# print(lon_min)
-# print(lon_interval)
+
 #%%
 df_stations[df_stations['cluster_code'].isnull()].head()
 #%%
@@ -120,7 +115,7 @@ df_stations_clusters = df_stations[['station_code', 'cluster_code']][df_stations
 #%%
 df_stations_clusters.head()
 #%%
-df_trips.head()
+df_trips.info()
 #%%
 # Prepare your df that will be input to the algorithm: To be done in a detailed fashion later
 # 1. Join df_trips and df_stations over station_code to get cluster_code
@@ -131,7 +126,7 @@ df_trips.head()
 #df_trips['start_just_date'].apply(str) #grouping by date filed crashed
 df_trips_agg_date = df_trips[['start_station_code','start_just_date_hr']].groupby(['start_station_code','start_just_date_hr']).size()
 #%%
-df_trips_agg_date.head()
+df_trips_agg_date.info()
 
 #%%
 df_trips_agg_date = df_trips_agg_date.reset_index()
@@ -140,7 +135,7 @@ df_trips_agg_date.rename(columns={0:'pickups'}, inplace=True)
 #%%
 df_trips_agg_date['pickups'].sum()
 #%%
-df_trips_agg_date.head() 
+df_trips_agg_date.info()
 #%%
 df_trips_agg_date_cluster = pd.merge(df_trips_agg_date, df_stations_clusters[['station_code', 'cluster_code']], 
                             left_on=['start_station_code'], right_on=['station_code'], 
@@ -180,7 +175,8 @@ df_trips_agg_date_cluster_temp.groupby('weather_year').size()
 #%%  
 df_trips_agg_date_cluster_temp = df_trips_agg_date_cluster_temp[df_trips_agg_date_cluster_temp['weather_year'] == 2018]
 #%%  
-df_trips_agg_date_cluster_temp.info()
+df_trips_agg_date_cluster_temp.tail(5)
+df_trips_agg_date_cluster_temp = df_trips_agg_date_cluster_temp.reset_index()
 
 #Transform cyclical data
 df_trips_agg_date_cluster_temp['weather_month_sin']  = np.sin(df_trips_agg_date_cluster_temp['weather_month'] * (2.*np.pi/24))
@@ -191,12 +187,14 @@ df_trips_agg_date_cluster_temp['weather_hour_cos']  = np.cos((df_trips_agg_date_
 
 dfy = pd.get_dummies(df_trips_agg_date_cluster_temp['cluster_code'])
 dfy = dfy.reset_index()
-#dfy.iloc[1000000]
-df_trips_agg_date_cluster_temp_eng = pd.concat([df_trips_agg_date_cluster_temp, dfy], axis = 1)
-df_trips_agg_date_cluster_temp_eng = df_trips_agg_date_cluster_temp_eng.reset_index()
-df_trips_agg_date_cluster_temp_eng.head(-5)
+df_trips_agg_date_cluster_temp.info()
+dfy.tail()
+df_trips_agg_date_cluster_temp.tail()
+df_trips_agg_date_cluster_temp_eng = pd.merge(df_trips_agg_date_cluster_temp, dfy, left_index=True, right_index=True, how = 'inner')
+df_trips_agg_date_cluster_temp_eng.info()
+df_trips_agg_date_cluster_temp_eng.tail()
+#df_trips_agg_date_cluster_temp_eng = df_trips_agg_date_cluster_temp_eng.reset_index()
 
-# dfz.info()
 # dfz[['cluster_code', 11.0, 12.0, 13.0, 54.0, 21.0]][df_trips_agg_date_cluster_temp['cluster_code'] == 54].describe()
 #%%
 from sklearn import preprocessing
@@ -214,16 +212,14 @@ data = pd.merge(datz, dfy,  left_index=True, right_index=True, how = 'inner')
 #CHECK: data[['cluster_code', 11.0, 12.0, 13.0, 54.0, 21.0]][data['cluster_code'] == 12].describe()
 #data['weather_hour_sin'].describe()
 #df_trips_agg_date_cluster_temp_eng['weather_hour_sin'].describe()
-X_train.shape
-x_scaled.shape
-df_trips_agg_date_cluster_temp_eng.info()
-daty.describe()
-daty.head(-5)
-daty.info()
-data.info()
-dfy.head(-5)
-data.head(-5)
-target.shape
+# X_train.shape
+# x_scaled.shape
+# df_trips_agg_date_cluster_temp_eng.info()
+# datz.info()
+# daty.info()
+# data.info()
+# dfy.info()
+# target.shape
 #Knn regression explains 28% variation, better than the regular regression w/ 8%
 #%%
 from sklearn.model_selection import train_test_split
