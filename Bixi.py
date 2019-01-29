@@ -160,7 +160,7 @@ df_weather.head()
 #%%
 df_trips_agg_date_cluster[df_trips_agg_date_cluster['cluster_code'].isnull()].head()
 #%%
-df_weather_agg_date = df_weather[['weather_just_date_hr', 'weather_day_of_week','weather_hour','weather_year','temperature','wind_speed','relative_humidity','wind_gust', 'cloud_cover_8_filled','humidex_filled','wind_dir_10s']].groupby('weather_just_date_hr').max()
+df_weather_agg_date = df_weather[['weather_just_date_hr', 'weather_month', 'weather_day_of_week','weather_hour','weather_year','temperature','wind_speed','relative_humidity','wind_gust', 'cloud_cover_8_filled','humidex_filled','wind_dir_10s']].groupby('weather_just_date_hr').max()
 df_weather_agg_date = df_weather_agg_date.reset_index()
 #df_weather_agg_date.rename(columns={0:'temperature'}, inplace=True)
 
@@ -180,16 +180,50 @@ df_trips_agg_date_cluster_temp.groupby('weather_year').size()
 #%%  
 df_trips_agg_date_cluster_temp = df_trips_agg_date_cluster_temp[df_trips_agg_date_cluster_temp['weather_year'] == 2018]
 #%%  
-df_trips_agg_date_cluster_temp.head()
+df_trips_agg_date_cluster_temp.info()
+
+#Transform cyclical data
+df_trips_agg_date_cluster_temp['weather_month_sin']  = np.sin(df_trips_agg_date_cluster_temp['weather_month'] * (2.*np.pi/24))
+df_trips_agg_date_cluster_temp['weather_month_cos']  = np.cos(df_trips_agg_date_cluster_temp['weather_month'] * (2.*np.pi/24))
+
+df_trips_agg_date_cluster_temp['weather_hour_sin']  = np.sin((df_trips_agg_date_cluster_temp['weather_hour'] - 1) * (2.*np.pi/12))
+df_trips_agg_date_cluster_temp['weather_hour_cos']  = np.cos((df_trips_agg_date_cluster_temp['weather_hour'] - 1) * (2.*np.pi/12))
+
+dfy = pd.get_dummies(df_trips_agg_date_cluster_temp['cluster_code'])
+dfy = dfy.reset_index()
+#dfy.iloc[1000000]
+df_trips_agg_date_cluster_temp_eng = pd.concat([df_trips_agg_date_cluster_temp, dfy], axis = 1)
+df_trips_agg_date_cluster_temp_eng = df_trips_agg_date_cluster_temp_eng.reset_index()
+df_trips_agg_date_cluster_temp_eng.head(-5)
+
+# dfz.info()
+# dfz[['cluster_code', 11.0, 12.0, 13.0, 54.0, 21.0]][df_trips_agg_date_cluster_temp['cluster_code'] == 54].describe()
 #%%
 from sklearn import preprocessing
-target = df_trips_agg_date_cluster_temp['pickups']
-target.head()
+target = df_trips_agg_date_cluster_temp_eng['pickups']
 #%%
-data = preprocessing.normalize(df_trips_agg_date_cluster_temp[['weather_hour', 'weather_day_of_week', 'cluster_code', 'temperature','wind_speed','relative_humidity','wind_gust', 'cloud_cover_8_filled','humidex_filled','wind_dir_10s']])
-#%%
-#data.head()
-
+min_max_scaler = preprocessing.MinMaxScaler()
+x_scaled = min_max_scaler.fit_transform(df_trips_agg_date_cluster_temp_eng[['temperature','wind_speed','relative_humidity','wind_gust', 'cloud_cover_8_filled','humidex_filled','wind_dir_10s']])
+daty = pd.DataFrame(x_scaled)
+daty.rename(columns={0: 'temperature', 1: 'wind_speed', 2:'relative_humidity', 3:'wind_gust', 4:'cloud_cover_8_filled', 5:'humidex_filled', 6:'wind_dir_10s' }, inplace=True)
+df_trips_agg_date_cluster_temp.head()
+#data = preprocessing.normalize(df_trips_agg_date_cluster_temp_eng[['temperature','wind_speed','relative_humidity','wind_gust', 'cloud_cover_8_filled','humidex_filled','wind_dir_10s']])
+datz = pd.merge(daty, df_trips_agg_date_cluster_temp_eng[['cluster_code', 'weather_month_sin', 'weather_month_cos', 'weather_hour_sin', 'weather_hour_cos']], left_index=True, right_index=True, how = 'inner')
+datz = datz.reset_index()
+data = pd.merge(datz, dfy,  left_index=True, right_index=True, how = 'inner')
+#CHECK: data[['cluster_code', 11.0, 12.0, 13.0, 54.0, 21.0]][data['cluster_code'] == 12].describe()
+#data['weather_hour_sin'].describe()
+#df_trips_agg_date_cluster_temp_eng['weather_hour_sin'].describe()
+X_train.shape
+x_scaled.shape
+df_trips_agg_date_cluster_temp_eng.info()
+daty.describe()
+daty.head(-5)
+daty.info()
+data.info()
+dfy.head(-5)
+data.head(-5)
+target.shape
 #Knn regression explains 28% variation, better than the regular regression w/ 8%
 #%%
 from sklearn.model_selection import train_test_split
@@ -199,7 +233,7 @@ from sklearn.neighbors import KNeighborsRegressor
 X_train, X_test, y_train, y_test = train_test_split(data, target, random_state = 0)
 #%%
 print(datetime.datetime.now().time())
-knnreg = KNeighborsRegressor(n_neighbors = 41).fit(X_train, y_train)
+knnreg = KNeighborsRegressor(n_neighbors = 31).fit(X_train, y_train)
 print(datetime.datetime.now().time())
 print(knnreg.score(X_test, y_test)) #Get the R-squared
 #%%
