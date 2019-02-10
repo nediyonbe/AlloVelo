@@ -1,32 +1,39 @@
+# import m
 from flask import Flask
+from flask import render_template, request, flash, redirect, url_for
+from Graph_creator import pickup_estimator
+from flask_wtf import FlaskForm
+from wtforms import DateTimeField, IntegerField, SubmitField, validators
+
 app = Flask(__name__)
+
+app.config['SECRET_KEY'] = 'b39b860b15b7e3a4b0cc201bc45ff268'
 # Following code block is for adding a video w/ autoplay and loop
 # <div align="right"; width: 100%; height: 100%">
 #   <iframe frameborder="0" height="40%" width="40%" 
 #     <iframe width="560" height="315" src="https://www.youtube.com/embed/p_Bxo91QSi4?controls=0I?&autoplay=1&loop=1&playlist=p_Bxo91QSi4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 #   </iframe>
 # </div>
+
+
 @app.route('/')
-def hello_world():
-    return '''
-		<!DOCTYPE html>
-		<html>
-		<head>
-		<title>AlloVélo</title>
-		</head>
-    <body>
-		<h1 align = "center">
-		Welcome to AlloVélo
-		</h1>
-		<p align = "center">
-    You will be able to see the impact of temperature on Bixi demand on this site. Enjoy!</p>
-    
-    <div align="left">
-			<a href="https://plot.ly/~nediyonbe/2/?share_key=cMta0BmBCnmea2AN5WfoWy" target="_blank" title="Bixi_Stations_over_Years_File" style="display: block; text-align: left;"><img src="https://plot.ly/~nediyonbe/2.png?share_key=cMta0BmBCnmea2AN5WfoWy" alt="Bixi_Stations_over_Years_File" style="max-width: 100%;width: 800px;"  width="800" onerror="this.onerror=null;this.src='https://plot.ly/404.png';" /></a>
-			<script data-plotly="nediyonbe:2" sharekey-plotly="cMta0BmBCnmea2AN5WfoWy" src="https://plot.ly/embed.js" async></script>
-		</div>
-		</html>
-    </body>
-		'''
+def home_page():
+    form = SubmitStuff()
+    return render_template('index.html', form=form)  # render a template
+
+
+@app.route('/', methods=['POST'])
+def home_page_post():
+    entrydate = request.form['entrydate']
+    pickup_estimator(entrydate)
+    return redirect(url_for('home_page'))
+
+
+
+
+class SubmitStuff(FlaskForm):
+    entrydate = DateTimeField('Date (YYYY-MM-DD)', format='%Y-%m-%d')
+    submit = SubmitField('Show Me')
+
 if __name__ == '__main__':
     app.run(debug=True)
