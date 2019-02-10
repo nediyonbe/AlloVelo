@@ -10,7 +10,7 @@ Additionally, bixi users can use the result to see what the demand will likely t
 ## Installation
 
 Use Python along with the following modules:
-pandas / glob / numpy / scikit
+pandas / glob / numpy / scikit / sklearn / scipy
 
 
 ## Usage
