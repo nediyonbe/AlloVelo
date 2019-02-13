@@ -224,10 +224,10 @@ def pickup_estimator(mydate):
             # direction where I want the menu to expand when I click on it
             direction='up',
             # here I specify where I want to place this drop-down on the map
-            x=0.75,
+            x=0.01,
             xanchor='left',
             y=0.05,
-            yanchor='bottom',
+            yanchor='top',
             #  specify font size and colors
             bgcolor='#000000',
             bordercolor='#FFFFFF',
