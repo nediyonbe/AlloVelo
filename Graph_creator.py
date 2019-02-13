@@ -153,10 +153,26 @@ def pickup_estimator(mydate):
             )
         data.append(station_data)
 
+    steps = []
+    for i in range(24):
+        steppy = dict(
+            method='restyle',
+            args=['visible', [False] * 24],
+        )
+        steppy['args'][1][i] = True  # Toggle i'th trace to "visible"
+        steps.append(steppy)
+
+    sliders = [dict(
+        active=10,
+        currentvalue={"prefix": "Hours of " + str(mydate.date()) + ':'},
+        pad={"t": 50},
+        steps=steps
+    )]
+
     # Create your map layout
     layout = dict(
         height=800,
-        width=800,
+        width=1800,
         # top, bottom, left and right margins
         margin=dict(t=0, b=0, l=0, r=0),
         font=dict(color='#FFFFFF', size=11),
@@ -188,7 +204,7 @@ def pickup_estimator(mydate):
                     args=['mapbox.style', 'dark'],
                     label='Dark',
                     method='relayout'
-                ),                    
+                ),
                 dict(
                     args=['mapbox.style', 'light'],
                     label='Light',
@@ -203,7 +219,7 @@ def pickup_estimator(mydate):
                     args=['mapbox.style', 'satellite-streets'],
                     label='Satellite with Streets',
                     method='relayout'
-                )                    
+                )
             ]),
             # direction where I want the menu to expand when I click on it
             direction='up',
@@ -216,99 +232,11 @@ def pickup_estimator(mydate):
             bgcolor='#000000',
             bordercolor='#FFFFFF',
             font=dict(size=11)
-        ),
-        # drop-down 2: select hour to visualize
-        dict(
-            # for each button I specify which dictionaries of my data list I want to visualize
-            buttons=list([
-                dict(label='0',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[0]}]),
-                dict(label = '1',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[1]}]),
-                dict(label = '2',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[2]}]),
-                dict(label = '3',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[3]}]),
-                dict(label = '4',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[4]}]),
-                dict(label = '5',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[5]}]),
-                dict(label = '6',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[6]}]),
-                dict(label = '7',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[7]}]),
-                dict(label = '8',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[8]}]),
-                dict(label = '9',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[9]}]),
-                dict(label = '10',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[10]}]),
-                dict(label = '11',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[11]}]),
-                dict(label = '12',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[12]}]),
-                dict(label = '13',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[13]}]),
-                dict(label = '14',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[14]}]),
-                dict(label = '15',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[15]}]),
-                dict(label = '16',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[16]}]),
-                dict(label = '17',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[17]}]),
-                dict(label = '18',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[18]}]),
-                dict(label = '19',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[19]}]),
-                dict(label = '20',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[20]}]),
-                dict(label = '21',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[21]}]),
-                dict(label = '22',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[22]}]),
-                dict(label = '23',
-                    method = 'update',
-                    args = [{'visible': button_visibility_arg[23]}])
-            ]),
-            # direction where the drop-down expands when opened
-            direction='down',
-            # positional arguments
-            x=0.01,
-            xanchor='left',
-            y=0.99,
-            yanchor='bottom',
-            # fonts and border
-            bgcolor='#000000',
-            bordercolor='#FFFFFF',
-            font=dict(size=11)
         )
     ])
+    layout['sliders'] = sliders
     # assign the list of dictionaries to the layout dictionary
     layout['updatemenus'] = updatemenus
     layout['title'] = 'Bixi Pickup Forecast' + ' ' + str(mydate.date())
-    figure = dict(data = data, layout = layout)
-    py.iplot(figure, filename = 'Bixi_Pickup_Demands')
+    figure = dict(data=data, layout=layout)
+    py.iplot(figure, filename='Bixi_Pickup_Demands')
