@@ -11,7 +11,16 @@ model check prophet.py: makes validation of the model, pickles the data.
 Bixi.py: trains the model with given split date and pickles the model for every cluster
 Graph_creator.py: unpickles the model, makes the prediction for the 24hours following the date given by the end user via the web app
 Webby.py: creates the web app
-index.html: designs the web app 9see the templates folder)
+index.html: designs the web app (see the templates folder)
+
+A screenshot of the web app is shown below. The user...
+- enters the date on the website for which he/she wants a pickup estimate the map of Montréal (selected date is shown on the left bottom corner here)
+- sets the desired time within the day using the slider at the bottom of the graph (each step corresponds to an hour wıthın day)
+- hovers on the stations to see the station id, neignborhood id, pickup estimation and relative demand change.
+The relative demand change gives the change with respect to the last 2 years' pickup realizations at the given weekday and month.
+The highest relative demand change is shown by stations with red color.
+
+![](2019-04-20-13-52-33.png)
 
 ## Installation
 
