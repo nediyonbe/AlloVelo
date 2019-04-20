@@ -20,7 +20,12 @@ A screenshot of the web app is shown below. The user...
 The relative demand change gives the change with respect to the last 2 years' pickup realizations at the given weekday and month.
 The highest relative demand change is shown by stations with red color.
 
-![](2019-04-20-14-01-22.png)
+Different map visuals are also possible: User can select one of the alternatives via the menu on the bottom left corner. In this view, Dark option is selected. 
+
+![](2019-04-20-14-04-06.png)
+
+Alternative view, namely the 'Light' option selected in this screenshot. Satellite and outdoor options are also available
+![](2019-04-20-14-07-05.png)
 
 ## Installation
 
