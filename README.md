@@ -15,12 +15,12 @@ index.html: designs the web app (see the templates folder)
 
 A screenshot of the web app is shown below. The user...
 - enters the date on the website for which he/she wants a pickup estimate the map of Montréal (selected date is shown on the left bottom corner here)
-- sets the desired time within the day using the slider at the bottom of the graph (each step corresponds to an hour wıthın day)
+- sets the desired time within the day using the slider at the bottom of the graph (each step corresponds to an hour within day)
 - hovers on the stations to see the station id, neignborhood id, pickup estimation and relative demand change.
 The relative demand change gives the change with respect to the last 2 years' pickup realizations at the given weekday and month.
 The highest relative demand change is shown by stations with red color.
 
-![](2019-04-20-13-52-33.png)
+![](2019-04-20-14-01-22.png)
 
 ## Installation
 
